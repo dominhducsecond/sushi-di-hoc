@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8DA1"/>
+      <stop offset="100%" stop-color="#FF5E7E"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="190" fill="#FFF9F5" opacity="0.95"/>
+  <!-- Cute Star with Smile -->
+  <path d="M256 96l43.5 88.2 97.3 14.1-70.4 68.6 16.6 96.9L256 318l-87 45.8 16.6-96.9-70.4-68.6 97.3-14.1z" fill="url(#star)" stroke="#FFA000" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Eyes -->
+  <circle cx="230" cy="235" r="10" fill="#4A3531"/>
+  <circle cx="282" cy="235" r="10" fill="#4A3531"/>
+  <circle cx="233" cy="232" r="3.5" fill="#FFF"/>
+  <circle cx="285" cy="232" r="3.5" fill="#FFF"/>
+  <!-- Blush -->
+  <ellipse cx="212" cy="250" rx="10" ry="6" fill="#FF6B8B" opacity="0.6"/>
+  <ellipse cx="300" cy="250" rx="10" ry="6" fill="#FF6B8B" opacity="0.6"/>
+  <!-- Smile -->
+  <path d="M238 252 Q256 270 274 252" fill="none" stroke="#4A3531" stroke-width="7" stroke-linecap="round"/>
+  <!-- Bottom Ribbon Text Badge -->
+  <rect x="136" y="388" width="240" height="48" rx="24" fill="#FF5E7E"/>
+  <text x="256" y="420" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="800" fill="#FFFFFF" text-anchor="middle">SUSHI ★</text>
+</svg>

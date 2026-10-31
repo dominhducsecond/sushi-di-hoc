@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Sushi Đi Học Ngoan</title>
+  <meta name="description" content="Ứng dụng chấm điểm đi học sớm/trễ và quản lý lịch học của bé Sushi">
+  
+  <!-- PWA & iOS Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FF6B8B">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sushi Đi Học">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top App Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-avatar" id="headerBrandAvatar" title="Chạm để đổi hình của bé Sushi và thầy cô">
+          <img class="child-avatar-img" id="headerChildPreview" alt="Hình bé Sushi" src="">
+          <span class="star-mini-badge">★</span>
+        </div>
+        <div class="brand-titles">
+          <h1 id="appTitleText">Nhật Ký Đi Học Của Sushi</h1>
+          <p id="todaySubtitle">Thứ Hai đến Thứ Bảy hằng tuần</p>
+        </div>
+      </div>
+      <div class="header-right-group">
+        <span class="offline-status-badge" id="offlineStatusBadge" hidden>Offline</span>
+        <button type="button" class="icon-btn quick-today-btn" id="btnGoToday" aria-label="Về hôm nay">
+          Hôm nay
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Viewport -->
+    <main class="app-main">
+      <!-- TAB 1: LỊCH & ĐIỂM DANH -->
+      <section class="tab-panel active" id="tab-calendar" aria-label="Lịch đi học">
+        
+        <!-- 10-Day Consecutive Streak Banner -->
+        <div class="streak-card" id="streakCard">
+          <div class="streak-card-top">
+            <div class="streak-info-with-child">
+              <img class="child-avatar-img streak-child-face" alt="Bé Sushi" src="">
+              <div class="streak-info">
+                <span class="streak-label">Chuỗi đi học sớm liên tiếp</span>
+                <div class="streak-counter-row">
+                  <strong class="streak-big-number" id="currentStreakCount">0</strong>
+                  <span class="streak-unit">/ 10 buổi nhận Sao To</span>
+                </div>
+              </div>
+            </div>
+            <div class="total-stars-pill" id="totalStarsBadge" title="Tổng số Ngôi Sao To đạt được">
+              <span class="star-icon-animated">⭐</span>
+              <span id="totalStarsCount">0</span>
+            </div>
+          </div>
+
+          <!-- 10 Star/Dot Progress Track -->
+          <div class="streak-track" id="streakTrack" aria-label="Tiến độ 10 buổi đi sớm liên tiếp">
+            <!-- Populated by JS: 10 slots -->
+          </div>
+
+          <p class="streak-hint" id="streakHintText">
+            Chủ nhật, ngày nghỉ và ngày ốm được giữ nguyên chuỗi không bị mất!
+          </p>
+        </div>
+
+        <!-- Quick Check-in Card for Selected or Today Date -->
+        <div class="today-quick-card" id="quickActionCard">
+          <div class="quick-card-header">
+            <div>
+              <span class="quick-tag" id="quickDateTag">Hôm nay</span>
+              <h2 class="quick-date-title" id="quickDateDisplay">--</h2>
+            </div>
+            <button type="button" class="btn-outline-sm" id="btnOpenDayModalFromQuick">
+              Chi tiết / Ghi chú
+            </button>
+          </div>
+          <div class="quick-faces-grid">
+            <button type="button" class="face-choice-btn early" id="btnQuickEarly">
+              <div class="teacher-face-frame">
+                <img class="teacher-happy-img" alt="Đi học sớm" src="">
+                <span class="face-badge-icon">😊</span>
+              </div>
+              <div class="face-choice-text">
+                <strong>Đi Học Sớm</strong>
+                <span>Thầy/cô khen ngợi</span>
+              </div>
+            </button>
+
+            <button type="button" class="face-choice-btn late" id="btnQuickLate">
+              <div class="teacher-face-frame">
+                <img class="teacher-sad-img" alt="Đi học trễ" src="">
+                <span class="face-badge-icon">😢</span>
+              </div>
+              <div class="face-choice-text">
+                <strong>Đi Học Trễ</strong>
+                <span>Thầy/cô buồn mếu</span>
+              </div>
+            </button>
+          </div>
+          <div class="quick-secondary-actions">
+            <button type="button" class="chip-btn sick" id="btnQuickSick">🤒 Nghỉ ốm (Giữ chuỗi)</button>
+            <button type="button" class="chip-btn off" id="btnQuickOff">🏖️ Nghỉ phép (Giữ chuỗi)</button>
+            <button type="button" class="chip-btn clear" id="btnQuickClear" hidden>↺ Xóa chấm</button>
+          </div>
+          <!-- Today's Scheduled Classes Preview -->
+          <div class="quick-classes-list" id="quickClassesList"></div>
+          <!-- Main School Contact Quick Bar -->
+          <div class="main-school-bar" id="quickMainSchoolBar"></div>
+        </div>
+
+        <!-- Monthly Calendar Card -->
+        <div class="calendar-card">
+          <div class="calendar-nav">
+            <button type="button" class="nav-arrow-btn" id="btnPrevMonth" aria-label="Tháng trước">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="calendar-month-title">
+              <h2 id="calendarMonthLabel">Tháng 10, 2026</h2>
+              <span class="month-summary-Mini" id="calendarMonthMiniStats">0 sớm • 0 trễ</span>
+            </div>
+            <button type="button" class="nav-arrow-btn" id="btnNextMonth" aria-label="Tháng sau">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+
+          <!-- Weekday Headers (Mon - Sun) -->
+          <div class="calendar-weekdays">
+            <span>T2</span>
+            <span>T3</span>
+            <span>T4</span>
+            <span>T5</span>
+            <span>T6</span>
+            <span>T7</span>
+            <span class="sun-header">CN</span>
+          </div>
+
+          <!-- Calendar Days Grid -->
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Legend -->
+          <div class="calendar-legend">
+            <span class="legend-item"><i class="dot early"></i> Đi sớm</span>
+            <span class="legend-item"><i class="dot late"></i> Đi trễ</span>
+            <span class="legend-item"><i class="dot star"></i> ★ Mốc 10 buổi</span>
+            <span class="legend-item"><i class="dot sick"></i> Ốm/Nghỉ</span>
+            <span class="legend-item"><i class="dot class-dot"></i> Có môn học</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LỊCH HỌC CÁC MÔN -->
+      <section class="tab-panel" id="tab-subjects" aria-label="Quản lý môn học và thời khóa biểu" hidden>
+        <!-- Main School Contact Card in Timetable Tab -->
+        <div class="school-contact-card" id="subjectsSchoolContactCard">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="section-header-card">
+          <div>
+            <h2>Thời Khóa Biểu Theo Môn</h2>
+            <p>Thêm môn học (VD: Piano, Tiếng Anh, Múa...) kèm số điện thoại, ảnh thầy/cô giáo và các khung giờ trong tuần.</p>
+          </div>
+          <button type="button" class="btn-primary" id="btnOpenAddSubject">
+            + Thêm môn học
+          </button>
+        </div>
+
+        <!-- Weekly Timetable Overview by Day (Mon - Sun) -->
+        <div class="weekly-overview-card">
+          <h3 class="card-subtitle">Lịch học các thứ trong tuần</h3>
+          <div class="weekday-pills-bar" id="weekdayFilterBar">
+            <button type="button" class="day-filter-pill active" data-day="all">Tất cả</button>
+            <button type="button" class="day-filter-pill" data-day="1">T2</button>
+            <button type="button" class="day-filter-pill" data-day="2">T3</button>
+            <button type="button" class="day-filter-pill" data-day="3">T4</button>
+            <button type="button" class="day-filter-pill" data-day="4">T5</button>
+            <button type="button" class="day-filter-pill" data-day="5">T6</button>
+            <button type="button" class="day-filter-pill" data-day="6">T7</button>
+            <button type="button" class="day-filter-pill" data-day="0">CN</button>
+          </div>
+          <div id="weeklyScheduleContainer" class="weekly-schedule-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Subjects List -->
+        <div class="subjects-section">
+          <h3 class="card-subtitle">Danh sách môn học đã tạo</h3>
+          <div class="subjects-grid" id="subjectsListContainer">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: THỐNG KÊ THEO KHOẢNG THỜI GIAN -->
+      <section class="tab-panel" id="tab-stats" aria-label="Thống kê đi học sớm trễ" hidden>
+        <div class="stats-filter-card">
+          <h2>Thống Kê Số Ngày Sớm / Trễ</h2>
+          <p>Chọn khoảng thời gian bất kỳ để đếm số buổi đi học của bé</p>
+
+          <div class="preset-chips" id="statsPresetGroup">
+            <button type="button" class="preset-chip" data-preset="this_week">Tuần này</button>
+            <button type="button" class="preset-chip active" data-preset="this_month">Tháng này</button>
+            <button type="button" class="preset-chip" data-preset="last_month">Tháng trước</button>
+            <button type="button" class="preset-chip" data-preset="all_time">Tất cả</button>
+          </div>
+
+          <div class="date-range-inputs">
+            <label class="date-field">
+              <span>Từ ngày</span>
+              <input type="date" id="statsStartDate">
+            </label>
+            <label class="date-field">
+              <span>Đến ngày</span>
+              <input type="date" id="statsEndDate">
+            </label>
+          </div>
+        </div>
+
+        <!-- Big Stats Summary Cards -->
+        <div class="stats-summary-grid">
+          <div class="stat-box early">
+            <div class="stat-face-thumb">
+              <img class="teacher-happy-img" alt="Thầy cô cười" src="">
+            </div>
+            <div class="stat-numbers">
+              <span class="stat-label">Đi học sớm</span>
+              <strong class="stat-value" id="statEarlyCount">0</strong>
+              <span class="stat-sub" id="statEarlyPercent">0% số buổi đi học</span>
+            </div>
+          </div>
+
+          <div class="stat-box late">
+            <div class="stat-face-thumb">
+              <img class="teacher-sad-img" alt="Thầy cô mếu" src="">
+            </div>
+            <div class="stat-numbers">
+              <span class="stat-label">Đi học trễ</span>
+              <strong class="stat-value" id="statLateCount">0</strong>
+              <span class="stat-sub" id="statLatePercent">0% số buổi đi học</span>
+            </div>
+          </div>
+
+          <div class="stat-box stars">
+            <div class="stat-star-icon">⭐</div>
+            <div class="stat-numbers">
+              <span class="stat-label">Ngôi sao mốc 10 buổi</span>
+              <strong class="stat-value" id="statMilestoneStars">0</strong>
+              <span class="stat-sub" id="statBestStreak">Chuỗi cao nhất: 0 buổi</span>
+            </div>
+          </div>
+
+          <div class="stat-box sick">
+            <div class="stat-star-icon">🤒</div>
+            <div class="stat-numbers">
+              <span class="stat-label">Nghỉ ốm / Nghỉ phép</span>
+              <strong class="stat-value" id="statExcusedCount">0</strong>
+              <span class="stat-sub">Không làm đứt chuỗi 10 buổi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar Visualization -->
+        <div class="stats-ratio-card">
+          <div class="ratio-header">
+            <span>Tỷ lệ Đi Sớm / Đi Trễ</span>
+            <strong id="statTotalSchoolDays">Tổng: 0 buổi đi học</strong>
+          </div>
+          <div class="ratio-bar">
+            <div class="ratio-fill early" id="ratioBarEarly" style="width: 50%"></div>
+            <div class="ratio-fill late" id="ratioBarLate" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <!-- Detailed History Log in Range -->
+        <div class="stats-history-card">
+          <h3 class="card-subtitle">Chi tiết các ngày trong khoảng đã chọn</h3>
+          <div class="history-list" id="statsHistoryList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: HÌNH ẢNH BÉ SUSHI, THẦY CÔ & CÀI ĐẶT -->
+      <section class="tab-panel" id="tab-settings" aria-label="Cài đặt hình ảnh bé Sushi, thầy cô và sao lưu" hidden>
+        <!-- Child Face & Name Config -->
+        <div class="settings-card">
+          <h2>Hình Khuôn Mặt & Tên Của Bé</h2>
+          <p>Thay đổi hình ảnh khuôn mặt đáng yêu của bé Sushi để hiển thị ở thanh tiêu đề và bảng tích lũy Ngôi Sao.</p>
+
+          <div class="child-profile-upload-row">
+            <div class="photo-preview-wrapper">
+              <img class="child-avatar-img child-settings-preview" id="settingsChildPreview" alt="Khuôn mặt bé Sushi" src="">
+              <span class="mood-pill child-pill">👧 Hình của bé</span>
+            </div>
+            <div class="child-profile-controls">
+              <label class="form-field" style="margin-top:0">
+                <span>Tên gọi của bé</span>
+                <input type="text" id="inputChildName" placeholder="VD: Sushi" value="Sushi">
+              </label>
+              <label class="btn-upload">
+                📸 Chọn ảnh khuôn mặt bé
+                <input type="file" id="inputChildPhoto" accept="image/*" hidden>
+              </label>
+              <button type="button" class="btn-text-danger" id="btnResetChildPhoto">Dùng hình bé mặc định</button>
+            </div>
+          </div>
+
+          <div class="school-info-inputs">
+            <div class="form-row-2">
+              <label class="form-field">
+                <span>🏫 Tên trường học chính</span>
+                <input type="text" id="inputSchoolName" placeholder="VD: Trường Mầm Non / Tiểu Học...">
+              </label>
+              <label class="form-field">
+                <span>📞 SĐT trường học chính</span>
+                <input type="tel" id="inputSchoolPhone" placeholder="VD: 0901234567">
+              </label>
+            </div>
+            <div id="settingsSchoolCallWrap" class="settings-school-call-wrap" hidden>
+              <a id="settingsSchoolCallLink" href="#" class="btn-call-pill">📞 Gọi ngay cho trường chính</a>
+            </div>
+          </div>
+
+          <p class="settings-note">
+            📌 Lịch đi học mặc định: <strong>Thứ 2 đến Thứ 7</strong>. Chủ nhật và các ngày đánh dấu Nghỉ ốm / Nghỉ phép sẽ được bỏ qua, không làm đứt chuỗi 10 buổi đi sớm liên tiếp.
+          </p>
+        </div>
+
+        <div class="settings-card">
+          <h2>Hình Ảnh Thầy / Cô Giáo</h2>
+          <p>Tải lên hình ảnh thực tế của thầy/cô giáo từ thư viện ảnh iPhone để hiển thị mỗi khi chấm điểm đi học sớm hoặc trễ.</p>
+
+          <div class="teacher-Upload-grid">
+            <!-- Happy Teacher Photo -->
+            <div class="photo-upload-box happy">
+              <div class="photo-preview-wrapper">
+                <img class="teacher-happy-img" id="settingsHappyPreview" alt="Thầy/cô cười" src="">
+                <span class="mood-pill happy">😊 Khi Đi Sớm (Cười)</span>
+              </div>
+              <div class="photo-actions">
+                <label class="btn-upload">
+                  📸 Chọn ảnh Thầy/Cô Cười
+                  <input type="file" id="inputHappyPhoto" accept="image/*" hidden>
+                </label>
+                <button type="button" class="btn-text-danger" id="btnResetHappyPhoto">Dùng hình mặc định</button>
+              </div>
+            </div>
+
+            <!-- Sad Teacher Photo -->
+            <div class="photo-upload-box sad">
+              <div class="photo-preview-wrapper">
+                <img class="teacher-sad-img" id="settingsSadPreview" alt="Thầy/cô mếu" src="">
+                <span class="mood-pill sad">😢 Khi Đi Trễ (Mếu)</span>
+              </div>
+              <div class="photo-actions">
+                <label class="btn-upload">
+                  📸 Chọn ảnh Thầy/Cô Mếu
+                  <input type="file" id="inputSadPhoto" accept="image/*" hidden>
+                </label>
+                <button type="button" class="btn-text-danger" id="btnResetSadPhoto">Dùng hình mặc định</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Install on iPhone 13 Guide -->
+        <div class="settings-card ios-guide-card">
+          <h2>📲 Cách cài ra màn hình chính iPhone 13</h2>
+          <ol class="ios-steps">
+            <li>Mở trang web này bằng trình duyệt <strong>Safari</strong> trên iPhone.</li>
+            <li>Chạm vào nút <strong>Chia sẻ (Share)</strong> <span class="ios-icon-inline">⬆️</span> ở thanh dưới cùng.</li>
+            <li>Cuộn xuống và chọn <strong>"Thêm vào MH chính" (Add to Home Screen)</strong>.</li>
+            <li>Nhấn <strong>Thêm (Add)</strong>. Biểu tượng <strong>Sushi Đi Học</strong> sẽ xuất hiện trên màn hình chính như một ứng dụng thật!</li>
+          </ol>
+        </div>
+
+        <!-- Backup & Restore -->
+        <div class="settings-card">
+          <h2>Sao Lưu & Khôi Phục Dữ Liệu</h2>
+          <p>Dữ liệu được lưu an toàn ngay trên iPhone. Bạn có thể xuất ra file để lưu trữ hoặc chuyển sang điện thoại khác.</p>
+          <div class="backup-actions">
+            <button type="button" class="btn-secondary" id="btnExportData">⬇️ Tải file sao lưu (.json)</button>
+            <label class="btn-secondary file-label-btn">
+              ⬆️ Khôi phục từ file
+              <input type="file" id="inputImportData" accept="application/json,.json" hidden>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Tab Bar (iOS Native Style) -->
+    <nav class="bottom-tabbar" aria-label="Điều hướng chính">
+      <button type="button" class="tab-item active" data-target="tab-calendar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Điểm Danh</span>
+      </button>
+      <button type="button" class="tab-item" data-target="tab-subjects">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Lịch Môn Học</span>
+      </button>
+      <button type="button" class="tab-item" data-target="tab-stats">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Thống Kê</span>
+      </button>
+      <button type="button" class="tab-item" data-target="tab-settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Thầy Cô & Cài Đặt</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL 1: CHI TIẾT NGÀY & CHẤM ĐIỂM + LỊCH HỌC TRONG NGÀY -->
+  <dialog class="sheet-dialog" id="dayDetailDialog" closedby="any">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <span class="sheet-badge" id="modalDayWeekdayBadge">Thứ Tư</span>
+          <h3 id="modalDayTitle">Ngày 28/10/2026</h3>
+        </div>
+        <button type="button" class="btn-close-circle" id="btnCloseDayModal" aria-label="Đóng">✕</button>
+      </div>
+
+      <!-- Milestone Star Banner inside Modal if this day achieved 10th consecutive early -->
+      <div class="milestone-celebration-banner" id="modalMilestoneBanner" hidden>
+        <div class="big-star-spin">⭐</div>
+        <div>
+          <strong>Chúc mừng mốc 10 buổi đi sớm liên tiếp!</strong>
+          <p>Bé đạt được 1 Ngôi Sao To vinh danh vào ngày này!</p>
+        </div>
+      </div>
+
+      <div class="sheet-body">
+        <p class="section-label">1. Chọn trạng thái đi học hôm nay:</p>
+        <div class="modal-status-grid">
+          <button type="button" class="modal-face-card early" data-status="early">
+            <img class="teacher-happy-img" alt="Thầy cô cười" src="">
+            <strong>Đi Học Sớm 😊</strong>
+            <span>Thầy/cô giáo cười tươi</span>
+          </button>
+
+          <button type="button" class="modal-face-card late" data-status="late">
+            <img class="teacher-sad-img" alt="Thầy cô mếu" src="">
+            <strong>Đi Học Trễ 😢</strong>
+            <span>Thầy/cô giáo buồn mếu</span>
+          </button>
+        </div>
+
+        <div class="modal-excused-row">
+          <button type="button" class="excused-pill sick" data-status="sick">
+            🤒 Nghỉ ốm (Không mất chuỗi)
+          </button>
+          <button type="button" class="excused-pill off" data-status="off">
+            🏖️ Nghỉ học (Không mất chuỗi)
+          </button>
+          <button type="button" class="excused-pill clear" data-status="none">
+            ↺ Bỏ đánh dấu
+          </button>
+        </div>
+
+        <!-- Scheduled Classes for this Day -->
+        <div class="modal-section-divider"></div>
+        <div class="modal-classes-header">
+          <p class="section-label">2. Lịch học hôm nay:</p>
+          <button type="button" class="btn-link-sm" id="btnAddExtraClassForDay">+ Thêm buổi học riêng</button>
+        </div>
+
+        <div class="modal-day-classes-list" id="modalDayClassesList">
+          <!-- Populated by JS: recurring subjects for this weekday + custom one-off classes -->
+        </div>
+
+        <!-- Extra One-off Class Form (Collapsible) -->
+        <div class="extra-class-form" id="extraClassFormBox" hidden>
+          <h4>Thêm buổi học bổ sung cho ngày này</h4>
+          <div class="form-row-2">
+            <label class="form-field">
+              <span>Tên môn / Hoạt động</span>
+              <input type="text" id="extraClassName" placeholder="VD: Học bù vẽ, Dã ngoại...">
+            </label>
+            <label class="form-field">
+              <span>Giờ học</span>
+              <input type="text" id="extraClassTime" placeholder="VD: 17:30 - 19:00">
+            </label>
+          </div>
+          <div class="form-row-2">
+            <label class="form-field">
+              <span>Tên thầy/cô (tùy chọn)</span>
+              <input type="text" id="extraClassTeacher" placeholder="VD: Cô Lan">
+            </label>
+            <label class="form-field">
+              <span>📞 SĐT liên hệ</span>
+              <input type="tel" id="extraClassPhone" placeholder="VD: 0909123456">
+            </label>
+          </div>
+          <label class="form-field">
+            <span>Ảnh thầy/cô</span>
+            <input type="file" id="extraClassPhoto" accept="image/*">
+          </label>
+          <div class="extra-form-actions">
+            <button type="button" class="btn-secondary-sm" id="btnCancelExtraClass">Hủy</button>
+            <button type="button" class="btn-primary-sm" id="btnSaveExtraClass">Lưu buổi học</button>
+          </div>
+        </div>
+
+        <!-- Daily Note -->
+        <div class="modal-section-divider"></div>
+        <label class="form-field">
+          <span class="section-label">3. Ghi chú trong ngày:</span>
+          <textarea id="modalDayNote" rows="2" placeholder="VD: Hôm nay con tự thức dậy sớm lúc 6h30 rất ngoan..."></textarea>
+        </label>
+      </div>
+
+      <div class="sheet-footer">
+        <button type="button" class="btn-primary full-width" id="btnSaveDayDetail">Xong & Lưu</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- MODAL 2: THÊM / SỬA MÔN HỌC ĐỊNH KỲ (VD: PIANO T4 7h-8h, T7 6h-7h) -->
+  <dialog class="sheet-dialog" id="subjectDialog" closedby="any">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h3 id="subjectModalTitle">Thêm Môn Học Mới</h3>
+        <button type="button" class="btn-close-circle" id="btnCloseSubjectModal" aria-label="Đóng">✕</button>
+      </div>
+
+      <form id="subjectForm" class="sheet-body">
+        <input type="hidden" id="subjectIdInput">
+
+        <label class="form-field">
+          <span>Tên môn học *</span>
+          <input type="text" id="subjectNameInput" placeholder="Ví dụ: Piano, Tiếng Anh, Bơi lội..." required>
+        </label>
+
+        <div class="form-row-2">
+          <label class="form-field">
+            <span>Tên cô / thầy giáo</span>
+            <input type="text" id="subjectTeacherNameInput" placeholder="Ví dụ: Cô Hương">
+          </label>
+          <label class="form-field">
+            <span>📞 SĐT môn học / thầy cô</span>
+            <input type="tel" id="subjectPhoneInput" placeholder="Ví dụ: 0909123456">
+          </label>
+        </div>
+
+        <div class="form-row-2">
+          <label class="form-field">
+            <span>📅 Ngày bắt đầu học</span>
+            <input type="date" id="subjectStartDateInput">
+          </label>
+          <label class="form-field">
+            <span>🏁 Ngày kết thúc (để trống nếu còn học)</span>
+            <div class="date-input-with-clear">
+              <input type="date" id="subjectEndDateInput">
+              <button type="button" class="btn-clear-date" id="btnClearSubjectEndDate" title="Xóa ngày kết thúc">✕</button>
+            </div>
+          </label>
+        </div>
+
+        <label class="form-field">
+          <span>Màu sắc nhãn</span>
+          <input type="color" id="subjectColorInput" value="#FF6B8B">
+        </label>
+
+        <!-- Teacher Photo for this Subject -->
+        <div class="subject-teacher-photo-row">
+          <img id="subjectTeacherPreview" class="subject-teacher-avatar" alt="Ảnh giáo viên môn học" src="">
+          <div class="subject-photo-controls">
+            <span>Hình ảnh cô/thầy giáo bộ môn</span>
+            <label class="btn-upload-sm">
+              📷 Chọn ảnh từ máy
+              <input type="file" id="subjectTeacherPhotoInput" accept="image/*" hidden>
+            </label>
+          </div>
+        </div>
+
+        <!-- Schedule Slots (e.g., Thứ 4: 07:00 - 08:00, Thứ 7: 06:00 - 07:00) -->
+        <div class="schedule-builder">
+          <div class="schedule-builder-header">
+            <span>Lịch học các thứ trong tuần *</span>
+            <button type="button" class="btn-link-sm" id="btnAddScheduleSlot">+ Thêm khung giờ</button>
+          </div>
+          <p class="helper-text">Ví dụ môn Piano: Thêm Thứ 4 (07:00 - 08:00) và Thứ 7 (06:00 - 07:00)</p>
+          <div id="scheduleSlotsContainer" class="schedule-slots-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div class="sheet-footer modal-actions-split">
+          <button type="button" class="btn-danger-outline" id="btnDeleteSubject" hidden>Xóa môn</button>
+          <button type="submit" class="btn-primary flex-1">Lưu Môn Học</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification & Milestone Star Confetti Overlay -->
+  <div id="toastNotification" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
